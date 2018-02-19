@@ -6,6 +6,7 @@ var paddleWidth = 70;
 var paddleHeight = 15;
 var paddleColor = 'purple';
 var paddlePosition = 0 - (paddleWidth / 2);
+var paddleSpeed = 10;
 var blockWidth = 50;
 var blockHeight = 25;
 var blockColor = 'green';
@@ -26,13 +27,18 @@ function startup() {
     addEventListeners();
     fillBlockArray();
 
-    setInterval(function () {
+    var interval = setInterval(function () {
         listenToKeypress();
         pen.clearRect(0 - fieldRadius, 0 - fieldRadius, fieldRadius * 2, fieldRadius * 2);
         moveBall();
-        checkWallCollision();
+        if (!checkWallCollision()) {
+            clearInterval(interval);
+        }
         checkBlockCollision();
-        checkPaddleCollision()
+        checkPaddleCollision();
+        if (checkVictory()) {
+            clearInterval(interval);
+        }
         drawBall();
         drawPaddle();
         drawBlocks();
@@ -58,22 +64,37 @@ function fillBlockArray() {
 
 function listenToKeypress() {
     if (!keyState[39] && keyState[37] && paddlePosition > -fieldRadius) {
-        paddlePosition -= 10;
+        paddlePosition -= paddleSpeed;
     } else if (!keyState[37] && keyState[39] && paddlePosition + paddleWidth < fieldRadius) {
-        paddlePosition += 10;
+        paddlePosition += paddleSpeed;
     }
+}
+
+function checkVictory() {
+    let victory = true;
+    for (let i = 0; i < 45; i++) {
+        if (blockArray[i] === true) {
+            victory = false;
+        }
+    }
+    if (victory) {
+        ballSpeed = 0;
+        paddleSpeed = 0;
+        window.alert("Victory!");
+    }
+    return victory;
 }
 
 function checkPaddleCollision() {
     //Left
     if (ballYpos + ballRadius > fieldRadius - paddleHeight
         && ballXpos + ballRadius > paddlePosition
-        && ballXpos - ballRadius < paddlePosition + paddleWidth/2) {
+        && ballXpos - ballRadius < paddlePosition + paddleWidth / 2) {
         ballDirection = 4;
     }
     //Right
     if (ballYpos + ballRadius > fieldRadius - paddleHeight
-        && ballXpos + ballRadius > paddlePosition + paddleWidth/2
+        && ballXpos + ballRadius > paddlePosition + paddleWidth / 2
         && ballXpos - ballRadius < paddlePosition + paddleWidth) {
         ballDirection = 1;
     }
@@ -150,9 +171,10 @@ function checkWallCollision() {
         ballDirection = 2;
     }
     //Bottom
-
     if (ballYpos - ballRadius > fieldRadius - ballRadius) {
         ballSpeed = 0;
+        window.alert("Game Over");
+        return false;
     }
     //Right
     if (ballXpos > fieldRadius - ballRadius && ballDirection === 1) {
@@ -161,6 +183,7 @@ function checkWallCollision() {
     if (ballXpos > fieldRadius - ballRadius && ballDirection === 2) {
         ballDirection = 3;
     }
+    return true;
 }
 
 function moveBall() {
